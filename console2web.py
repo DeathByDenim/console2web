@@ -18,14 +18,14 @@ async def websocket_handler(request):
 
     try:
         async for msg in ws:
-            global proc
             print(msg)
             if msg.type == WSMsgType.TEXT:
                 print(msg.data)
                 if msg.data == 'close':
                     await ws.close()
                 else:
-                    proc.stdin.write((msg.data + '\n').encode('utf-8'))
+                    if request.app['process'] != None:
+                        request.app['process'].stdin.write((msg.data + '\n').encode('utf-8'))
 
                     # await ws.send_str(msg.data + '/answer')
     finally:
@@ -37,15 +37,14 @@ async def websocket_handler(request):
 async def listen_to_redis(app):
     await asyncio.sleep(10)
 
-async def system_process(command):
-    global proc
-    proc = await asyncio.create_subprocess_exec(
-        command,
+async def system_process(app):
+    app['process'] = await asyncio.create_subprocess_exec(
+        app['command'],
         stdin=asyncio.subprocess.PIPE,
         stdout=asyncio.subprocess.PIPE)
     while True:
         # proc.stdin.write(b'hello\n')
-        data = await proc.stdout.readline()
+        data = await app['process'].stdout.readline()
         line = data.decode('ascii').rstrip()
         print(line)
         for ws in set(app['websockets']):
@@ -54,7 +53,7 @@ async def system_process(command):
         # await asyncio.sleep(0.03)
 
 async def start_background_tasks(app):
-    app['system_process'] = asyncio.create_task(system_process(app['command']))
+    app['system_process'] = asyncio.create_task(system_process(app))
 
 async def cleanup_background_tasks(app):
     app['system_process'].cancel()
@@ -79,6 +78,7 @@ if __name__ == "__main__":
     app = web.Application()
     app['command'] = " ".join(args)
     app['websockets'] = weakref.WeakSet()
+    app['process'] = None
     app.on_startup.append(start_background_tasks)
     app.on_cleanup.append(cleanup_background_tasks)
     app.add_routes([

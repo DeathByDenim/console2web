@@ -24,6 +24,7 @@ async def websocket_handler(request):
                 if msg.data == 'close':
                     await ws.close()
                 else:
+                    print(msg.data + '\n')
                     if request.app['process'] != None:
                         request.app['process'].stdin.write((msg.data + '\n').encode('utf-8'))
 
@@ -40,6 +41,7 @@ async def listen_to_redis(app):
 async def system_process(app):
     app['process'] = await asyncio.create_subprocess_exec(
         app['command'],
+        *app['args'],
         stdin=asyncio.subprocess.PIPE,
         stdout=asyncio.subprocess.PIPE)
     while True:
@@ -73,10 +75,14 @@ if __name__ == "__main__":
         else:
             PORT = int(args[0][2:])
             args = args[1:]
-
+    if len(args) == 0:
+        print("Usage: " + sys.argv[0] + " [-p PORT] COMMAND")
+    command = args[0]
+    args = args[1:]
 
     app = web.Application()
-    app['command'] = " ".join(args)
+    app['command'] = command
+    app['args'] = args
     app['websockets'] = weakref.WeakSet()
     app['process'] = None
     app.on_startup.append(start_background_tasks)

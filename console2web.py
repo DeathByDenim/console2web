@@ -42,14 +42,18 @@ async def system_process(app):
         stdin=asyncio.subprocess.PIPE,
         stdout=asyncio.subprocess.PIPE)
     app['mutable_state']['process'] = process
-    while True:
+    while not app['system_process'].cancelled():
         data = await process.stdout.readline()
-        line = data.decode('ascii').rstrip()
-        print(line, flush=True)
-        for ws in set(app['websockets']):
-            await ws.send_str(line)
-
-        # await asyncio.sleep(0.03)
+        if process.stdout.at_eof():
+            sys.exit(0)
+        else:
+            line = data.decode('ascii').rstrip()
+            print(len(line))
+            print(process.returncode)
+            print(process.stdout.at_eof())
+            print("Line: \"" + line + "\"", flush=True)
+            for ws in set(app['websockets']):
+                await ws.send_str(line)
 
 async def start_background_tasks(app):
     app['system_process'] = asyncio.create_task(system_process(app))
@@ -57,7 +61,6 @@ async def start_background_tasks(app):
 async def cleanup_background_tasks(app):
     print('cleaning up', flush=True)
     app['system_process'].cancel()
-    # await app['system_process']
 
 async def cancel_background_tasks(app):
     app['system_process'].cancel()

@@ -1,11 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <title>Console</title>
-  <script src="console.js"></script>
-</head>
-<body>
-  <p>Running</p>
-  <button type="button" name="button" onclick="sendHello();">Send Hello</button>
-</body>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Game server dashboard</title>
+    <link rel="stylesheet" href="/css/master.css">
+    <script src="js/mindustry.js" charset="utf-8"></script>
+  </head>
+  <body>
+    <h1>Game server dashboard</h1>
+    <h2>Mindustry</h2>
+    <div id="mindustry_output">
+      <p>Mindustry console</p>
+    </div>
+    <form id="mindustry_form" onsubmit="return false;"><input id="mindustry_command" size="80" autocomplete="off"></input><button id="mindustry_submit">Enter</button></form>
+  </body>
 </html>

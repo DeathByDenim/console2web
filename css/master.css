@@ -37,7 +37,8 @@
   padding: 0;
   font-family: monospace;
   font-weight: bold;
-  white-space: pre;
+  white-space: pre-wrap;
+  /* word-break: break-all; */
   color: var(--terminal-color-default);
   display: inline-block;
 }

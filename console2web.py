@@ -32,15 +32,14 @@ async def websocket_handler(request):
     print('Websocket connection closed', flush=True)
     return ws
 
-async def listen_to_redis(app):
-    await asyncio.sleep(10)
-
 async def system_process(app):
     process = await asyncio.create_subprocess_exec(
         app['command'],
         *app['args'],
         stdin=asyncio.subprocess.PIPE,
-        stdout=asyncio.subprocess.PIPE)
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.STDOUT
+        )
     app['mutable_state']['process'] = process
     while not app['system_process'].cancelled():
         data = await process.stdout.readline()
@@ -48,10 +47,11 @@ async def system_process(app):
             sys.exit(0)
         else:
             line = data.decode('ascii').rstrip()
-            print(len(line))
-            print(process.returncode)
-            print(process.stdout.at_eof())
-            print("Line: \"" + line + "\"", flush=True)
+            # print(len(line))
+            # print(process.returncode)
+            # print(process.stdout.at_eof())
+            # print("Line: \"" + line + "\"", flush=True)
+            print(line, flush=True)
             for ws in set(app['websockets']):
                 await ws.send_str(line)
 

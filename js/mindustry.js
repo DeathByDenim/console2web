@@ -14,7 +14,7 @@ function init() {
   }
 
   // Create WebSocket connection.
-  const socket = new WebSocket("ws://192.168.122.2:8080")
+  const socket = new WebSocket("ws://127.0.0.1:8080")
 
   // Connection opened
   socket.addEventListener('open', function (event) {

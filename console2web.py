@@ -46,7 +46,7 @@ async def system_process(app):
         if process.stdout.at_eof():
             sys.exit(0)
         else:
-            line = data.decode('ascii').rstrip()
+            line = data.decode('utf-8').rstrip()
             # print(len(line))
             # print(process.returncode)
             # print(process.stdout.at_eof())

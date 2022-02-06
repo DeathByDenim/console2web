@@ -137,6 +137,6 @@ if __name__ == '__main__':
     app.on_startup.append(start_process)
     app.on_shutdown.append(end_process)
     app.add_routes([web.get('/', websocket_handler)])
-    web.run_app(app)
+    web.run_app(app, host=options['host'], port=options['port'])
     # print("I am so done here")
     # print(app['process'].returncode)

@@ -20,10 +20,8 @@ async def websocket_handler(request):
                     await ws.close()
                 else:
                     if not app['process'].stdin.is_closing():
-                        # print("Sending " + msg.data, flush=True)
                         app['process'].stdin.write((msg.data + '\n').encode('utf-8'))
                         await app['process'].stdin.drain()
-                        # print("Done sending " + msg.data, flush=True)
     finally:
         request.app['websockets'].discard(ws)
 
@@ -34,26 +32,12 @@ async def listen_to_process(proc):
     while not proc.stdout.at_eof():
         line = await proc.stdout.readline()
         line = line.decode('utf-8')
-        # print(proc.stdout.at_eof(), flush=True)
         print(line, flush=True, end='')
         for ws in set(app['websockets']):
-            # print("Sending to WebSocket", flush=True)
             await ws.send_str(line)
-            # print("Done sending to WebSocket", flush=True)
-    # print("Done listening", flush=True)
-
-async def say_stuff(proc):
-    await asyncio.sleep(2)
-    proc.stdin.write(('msg.data' + '\n').encode('utf-8'))
-    await proc.stdin.drain()
-    await asyncio.sleep(2)
-    proc.stdin.write(('salad' + '\n').encode('utf-8'))
-    await proc.stdin.drain()
-    print("Done saying stuff", flush=True)
 
 async def wait_for_process(proc):
     await proc.wait()
-    # print("Process exited", flush=True)
     # It seems the only way to shut down the web server is to send a SIGINT?
     signal.raise_signal(signal.SIGINT)
 
@@ -69,18 +53,15 @@ async def start_process(app):
 
     app['process'] = proc
     app['listen_process'] = asyncio.create_task(listen_to_process(proc))
-    # app['say_process'] = asyncio.create_task(say_stuff(proc))
     app['wait_process'] = asyncio.create_task(wait_for_process(proc))
 
 async def end_process(app):
-    # print("ending_process", flush=True)
     if not app['process'].stdin.is_closing():
         if app['options']['exit_statement'] == "":
             app['process'].stdin.write_eof()
         else:
             app['process'].stdin.write((app['options']['exit_statement'] + '\n').encode('utf-8'))
         await app['process'].stdin.drain()
-    # print("end_process", flush=True)
 
 def print_usage():
     progname = sys.argv[0].split('/')[-1]
@@ -138,5 +119,3 @@ if __name__ == '__main__':
     app.on_shutdown.append(end_process)
     app.add_routes([web.get('/', websocket_handler)])
     web.run_app(app, host=options['host'], port=options['port'])
-    # print("I am so done here")
-    # print(app['process'].returncode)

@@ -54,6 +54,8 @@ async def start_process(app):
     app['process'] = proc
     app['listen_process'] = asyncio.create_task(listen_to_process(proc))
     app['wait_process'] = asyncio.create_task(wait_for_process(proc))
+    if app['options']['begin_statement'] != "":
+        app['process'].stdin.write((app['options']['begin_statement'] + '\n').encode('utf-8'))
 
 async def end_process(app):
     if not app['process'].stdin.is_closing():
@@ -75,6 +77,7 @@ def parse_arguments():
     options = {
         "port": 8080,
         "host": "localhost",
+        "begin_statement": "",
         "exit_statement": "",
         "command": ""
     }
@@ -92,6 +95,12 @@ def parse_arguments():
             args = args[2:]
         elif args[0][0:2] == '-p':
             options["port"] = int(args[0][2:])
+            args = args[1:]
+        elif args[0] == '-b' and len(args) > 1:
+            options["begin_statement"] = args[1]
+            args = args[2:]
+        elif args[0][0:2] == '-b':
+            options["begin_statement"] = args[0][2:]
             args = args[1:]
         elif args[0] == '-e' and len(args) > 1:
             options["exit_statement"] = args[1]

@@ -5,10 +5,30 @@ from aiohttp import web, WSMsgType
 import weakref
 import signal
 import sys
+from hashlib import md5
+import http.cookies
 
 async def websocket_handler(request):
     print('Websocket connection starting', flush=True)
     ws = web.WebSocketResponse()
+
+    if app['options']['authentication'] != '':
+        try:
+            cookie = http.cookies.SimpleCookie(request.headers['Cookie'])
+            md5password = cookie.get('token').value
+            if md5password != md5(app['options']['authentication'].encode('utf8')).hexdigest():
+                print("Authentication failed", flush=True)
+                ws.set_status(403)
+                await ws.prepare(request)
+                return ws
+            else:
+                print("Authentication successful", flush=True)
+        except:
+            print("Exception occured", flush=True)
+            ws.set_status(500)
+            await ws.prepare(request)
+            return ws
+
     await ws.prepare(request)
     print('Websocket connection ready', flush=True)
     request.app['websockets'].add(ws)
@@ -79,7 +99,8 @@ def parse_arguments():
         "host": "localhost",
         "begin_statement": "",
         "exit_statement": "",
-        "command": ""
+        "command": "",
+        "authentication": ""
     }
 
     args = sys.argv[1:]
@@ -107,6 +128,12 @@ def parse_arguments():
             args = args[2:]
         elif args[0][0:2] == '-e':
             options["exit_statement"] = args[0][2:]
+            args = args[1:]
+        elif args[0] == '-a' and len(args) > 1:
+            options["authentication"] = args[1]
+            args = args[2:]
+        elif args[0][0:2] == '-a':
+            options["authentication"] = args[0][2:]
             args = args[1:]
         else:
             break
